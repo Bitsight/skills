@@ -16,6 +16,10 @@ This is a test skill created to verify that the CI/CD pipeline is working correc
 
 This skill is used internally for testing purposes only.
 
+## Setup
+
+Set the User-Agent: header to identify your client when making requests.
+
 ## Features
 
 - Verifies skill discovery
