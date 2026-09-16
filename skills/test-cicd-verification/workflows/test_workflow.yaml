@@ -1,0 +1,5 @@
+name: Test Workflow
+description: A test workflow for verification
+steps:
+  - name: Initialize
+    action: test

@@ -1,0 +1,6 @@
+{
+  "api_references": [
+    "BITSIGHT_API_JWT",
+    "BITSIGHT_API_TOKEN"
+  ]
+}
