@@ -1,0 +1,376 @@
+{
+  "source": {
+    "note": "Behavior notes for GET /companies/{guid}/findings. Values are illustrative and not taken from any real company."
+  },
+  "endpoints": {
+    "findings": {
+      "method": "GET",
+      "path": "/companies/{guid}/findings",
+      "base_url": "https://service.bitsighttech.com/customer-api/v1",
+      "purpose": "Company-scoped findings. Use this for CVEs, assets, risk vectors, evidence, severity, rating impact, remediation, tags, and threat insights.",
+      "live_page_request": {
+        "query": {
+          "details.vulnerabilities.severity": "severe",
+          "expand": "remediation_history,attributed_companies,remediation_validation,tag_details,assets.tag_details,threat_insights",
+          "impacts_risk_vector_details": "AFFECTS_RATING",
+          "limit": 100,
+          "offset": 0,
+          "q": "",
+          "sort": "-last_seen"
+        },
+        "observed_result": {
+          "status": 200,
+          "count": 15,
+          "links.next": null
+        }
+      }
+    },
+    "finding_filters": {
+      "method": "GET",
+      "path": "/companies/{guid}/findings/filters",
+      "base_url": "https://service.bitsighttech.com/customer-api/v1",
+      "purpose": "Discover company-specific filter values before querying findings.",
+      "important_response_keys": {
+        "vulnerabilities": ["name", "alias", "display_name", "severity", "confidence"]
+      },
+      "when_to_use": [
+        "User asks what CVEs exist for a company.",
+        "Need valid CVE names, aliases, severities, or confidence values before filtering.",
+        "Need to build an exact CVE filter from available values."
+      ]
+    },
+    "company_search": {
+      "method": "GET",
+      "path": "/companies/search",
+      "base_url": "https://service.bitsighttech.com/customer-api/v1",
+      "purpose": "Resolve and disambiguate companies before querying findings, assets, or vulnerabilities.",
+      "important_query_params": {
+        "name": "Search by company name.",
+        "domain": "Search by company domain.",
+        "guids": "Lookup specific company GUIDs.",
+        "expand": "Use details to inspect in_portfolio, self_published, has_company_tree, primary_company, is_primary, and confidence.",
+        "in_portfolio": "Optional portfolio filter. Useful signal, not proof that the company matches the requested business."
+      },
+      "when_to_use": [
+        "User provides a company name instead of a GUID.",
+        "Multiple similarly named companies exist.",
+        "Need to identify whether a self-published, parent, subsidiary, or primary company is the right scope."
+      ]
+    },
+    "company_tree": {
+      "method": "GET",
+      "path": "/companies/{guid}/company-tree",
+      "base_url": "https://service.bitsighttech.com/customer-api/v1",
+      "purpose": "Inspect the visible company hierarchy from the root company before selecting the company to query.",
+      "related_endpoint": "/companies/{guid}/company-tree/guids",
+      "related_endpoint_filters": ["q", "name", "domain", "ip"],
+      "when_to_use": [
+        "Search details show has_company_tree=true.",
+        "The candidate list includes parent, subsidiary, primary, or self-published companies.",
+        "Findings look like honeypots or otherwise inconsistent with the expected business.",
+        "The prompt does not make the intended tree scope clear."
+      ],
+      "clarification_rule": "Ask the user to choose when multiple plausible companies remain after checking search details and the tree."
+    }
+  },
+  "filter_semantics": {
+    "server_side_filters_that_work": {
+      "vulnerabilities": {
+        "description": "CVE identifier, vulnerability name, or alias.",
+        "examples": ["CVE-2023-27522", "CVE-2014-3566", "POODLE"],
+        "observed_behavior": {
+          "query": "vulnerabilities=CVE-2024-12356&limit=1&offset=0",
+          "result": "The filter narrows results server-side."
+        }
+      },
+      "details.vulnerabilities.severity": {
+        "description": "Vulnerability severity inside finding details. Use lowercase values.",
+        "examples": ["severe", "material", "moderate", "minor"],
+        "observed_behavior": {
+          "query": "details.vulnerabilities.severity=severe&limit=1&offset=0",
+          "result": "The filter narrows results server-side."
+        }
+      },
+      "risk_vector": {
+        "description": "Finding family slug. Use only when the question is scoped to specific vectors.",
+        "examples": ["open_ports", "ssl_configurations", "patching_cadence", "server_software"]
+      },
+      "impacts_risk_vector_details": {
+        "description": "Rating-impact reason. Use AFFECTS_RATING for currently rating-impacting findings.",
+        "examples": ["AFFECTS_RATING"]
+      },
+      "assets__asset": {
+        "description": "Hostname, IP, or asset value attached to a finding."
+      },
+      "assets__identifier": {
+        "description": "Asset identifier, especially useful for mobile or non-host assets."
+      },
+      "assets__combined_importance": {
+        "description": "Asset importance bucket.",
+        "examples": ["critical", "high", "medium", "low", "none"]
+      },
+      "observed_ips_contains": {
+        "description": "Substring match against observed IP fields."
+      },
+      "cvss__base": {
+        "description": "CVSS base score/range filter as accepted by the API."
+      },
+      "q": {
+        "description": "Broad findings search. q= may be sent even when empty."
+      }
+    },
+    "known_gotchas": {
+      "details.vulnerabilities.name": {
+        "status": "do_not_use",
+        "reason": "This parameter is ignored for CVE lookup.",
+        "replacement": "vulnerabilities",
+        "observed_behavior": {
+          "query": "details.vulnerabilities.name=CVE-2024-12356&limit=1&offset=0",
+          "result": "The result count was unfiltered."
+        }
+      },
+      "details.vulnerabilities.confidence": {
+        "status": "do_not_use_server_side",
+        "reason": "HIGH/high confidence filters are ignored by the findings endpoint.",
+        "replacement": "Fetch findings narrowed by server-side filters and a bounded page count, then filter details.vulnerabilities[].confidence client-side.",
+        "observed_behavior": {
+          "queries": ["details.vulnerabilities.confidence=HIGH&limit=1&offset=0", "details.vulnerabilities.confidence=high&limit=1&offset=0"],
+          "result": "The result count was unfiltered."
+        }
+      },
+      "vulnerabilities__severity": {
+        "status": "avoid_for_live_findings_page_behavior",
+        "reason": "Use details.vulnerabilities.severity; the legacy severity filter does not narrow results.",
+        "replacement": "details.vulnerabilities.severity"
+      },
+      "vulnerabilities__confidence": {
+        "status": "avoid_for_live_findings_page_behavior",
+        "reason": "The legacy confidence filter does not narrow results.",
+        "replacement": "Client-side confidence filtering over returned vulnerability details."
+      }
+    },
+    "case_rules": {
+      "details.vulnerabilities.severity": "lowercase",
+      "vulnerabilities": "CVE identifiers are conventionally uppercase, aliases can be API values such as POODLE",
+      "impacts_risk_vector_details": "uppercase enum values such as AFFECTS_RATING",
+      "assets__is_monitored": "lowercase boolean strings true or false"
+    },
+    "filter_notes": {
+      "assets__is_monitored": "Do not use in general company findings queries. The is_monitored field belongs to Bitsight's Critical Asset Management (CAM) feature, which has its own separate API and is not aligned to individual company findings. When a user asks about 'monitored assets' they mean all assets attributed to the company — no filter is needed. Only use this filter if the user is explicitly working with CAM."
+    }
+  },
+  "response_shape": {
+    "top_level": ["links", "count", "results"],
+    "finding_fields": [
+      "temporary_id",
+      "affects_rating",
+      "impact_end_date",
+      "assets",
+      "details",
+      "evidence_key",
+      "first_seen",
+      "last_seen",
+      "risk_category",
+      "risk_vector",
+      "risk_vector_label",
+      "severity",
+      "severity_category",
+      "tags",
+      "tag_details",
+      "impacts_risk_vector_details"
+    ],
+    "asset_fields_observed": [
+      "asset",
+      "identifier",
+      "category",
+      "importance",
+      "is_ip",
+      "asset_type",
+      "tag_details",
+      "is_monitored",
+      "country_code"
+    ],
+    "vulnerability_location": "results[].details.vulnerabilities[]",
+    "vulnerability_fields_observed": [
+      "name",
+      "alias",
+      "display_name",
+      "description",
+      "remediation_tip",
+      "confidence",
+      "cvss.base",
+      "severity"
+    ],
+    "open_port_detail_fields_observed": [
+      "details.cvss.base",
+      "details.diligence_annotations.message",
+      "details.diligence_annotations.CPE",
+      "details.diligence_annotations.Product",
+      "details.diligence_annotations.Version",
+      "details.diligence_annotations.transport",
+      "details.diligence_annotations.Status",
+      "details.diligence_annotations.Server",
+      "details.final_location",
+      "details.geo_ip_location",
+      "details.country",
+      "details.grade",
+      "details.sample_timestamp"
+    ]
+  },
+  "vector_playbooks": {
+    "open_ports": {
+      "category": "diligence",
+      "use_when": [
+        "User asks for open ports with CVEs.",
+        "User asks for exposed-service CVEs.",
+        "User asks for severe vulnerabilities that affect rating in the findings UI.",
+        "User asks which IPs/assets expose a CVE."
+      ],
+      "primary_filters": {
+        "risk_vector": "open_ports",
+        "vulnerabilities": "CVE identifier or alias",
+        "details.vulnerabilities.severity": "severe|material|moderate|minor",
+        "impacts_risk_vector_details": "AFFECTS_RATING",
+        "assets__asset": "hostname or IP",
+        "assets__combined_importance": "critical,high,medium,low,none",
+        "assets__is_monitored": "true|false",
+        "cvss__base": "API-supported CVSS expression"
+      },
+      "recommended_expansions": [
+        "remediation_history",
+        "attributed_companies",
+        "remediation_validation",
+        "tag_details",
+        "assets.tag_details",
+        "threat_insights"
+      ],
+      "recommended_sort": "-last_seen",
+      "example_cli": [
+        "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --open-ports --severity severe --impacts-risk-vector-details AFFECTS_RATING --default-expand --sort=-last_seen",
+        "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --open-ports --cve CVE-2023-27522 --summary assets --all-pages",
+        "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --open-ports --asset 203.0.113.10 --summary cves --all-pages"
+      ]
+    },
+    "ssl_configurations": {
+      "category": "diligence",
+      "use_when": [
+        "User asks for SSL/TLS configuration CVEs or named SSL vulnerabilities.",
+        "User asks for POODLE/FREAK/ROBOT-style findings."
+      ],
+      "primary_filters": {
+        "risk_vector": "ssl_configurations",
+        "vulnerabilities": "CVE identifier or alias",
+        "assets__asset": "hostname or IP",
+        "grade": "rating grade filter",
+        "check_pass": "configuration check result"
+      },
+      "example_cli": [
+        "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --risk-vector ssl_configurations --cve POODLE --summary assets --all-pages"
+      ],
+      "observed_behavior": {
+        "query": "vulnerabilities=CVE-2014-3566&limit=1&offset=0",
+        "result": "The filter narrows results server-side."
+      }
+    },
+    "patching_cadence": {
+      "category": "diligence",
+      "use_when": [
+        "User asks for patching cadence CVE findings.",
+        "User asks for a CVE that is not necessarily open-port related."
+      ],
+      "primary_filters": {
+        "risk_vector": "patching_cadence",
+        "vulnerabilities": "CVE identifier or alias",
+        "details.vulnerabilities.severity": "severe|material|moderate|minor",
+        "assets__combined_importance": "critical,high,medium,low,none"
+      },
+      "example_cli": [
+        "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --risk-vector patching_cadence --cve CVE-2024-12356 --summary assets --all-pages"
+      ],
+      "observed_behavior": {
+        "query": "vulnerabilities=CVE-2024-12356&limit=1&offset=0",
+        "result": "The filter narrows results server-side."
+      }
+    },
+    "server_software": {
+      "category": "diligence",
+      "use_when": [
+        "User asks for vulnerable or unsupported server software findings.",
+        "User scopes CVEs to server software rather than open ports."
+      ],
+      "primary_filters": {
+        "risk_vector": "server_software",
+        "vulnerabilities": "CVE identifier or alias",
+        "details.vulnerabilities.severity": "severe|material|moderate|minor",
+        "cvss__base": "API-supported CVSS expression",
+        "assets__asset": "hostname or IP",
+        "assets__combined_importance": "critical,high,medium,low,none"
+      },
+      "example_cli": [
+        "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --risk-vector server_software --severity severe --summary both --all-pages"
+      ]
+    },
+    "desktop_software": {
+      "category": "diligence",
+      "use_when": [
+        "User scopes CVEs to desktop software."
+      ],
+      "primary_filters": {
+        "risk_vector": "desktop_software",
+        "vulnerabilities": "CVE identifier or alias",
+        "details.vulnerabilities.severity": "severe|material|moderate|minor",
+        "cvss__base": "API-supported CVSS expression"
+      },
+      "example_cli": [
+        "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --risk-vector desktop_software --summary cves --all-pages"
+      ]
+    },
+    "mobile_software": {
+      "category": "diligence",
+      "use_when": [
+        "User scopes CVEs to mobile software."
+      ],
+      "primary_filters": {
+        "risk_vector": "mobile_software",
+        "vulnerabilities": "CVE identifier or alias",
+        "details.vulnerabilities.severity": "severe|material|moderate|minor",
+        "cvss__base": "API-supported CVSS expression"
+      },
+      "example_cli": [
+        "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --risk-vector mobile_software --summary cves --all-pages"
+      ]
+    }
+  },
+  "automation_caveats": {
+    "company_selection": "Prefer --company-guid for unattended workflows so company search ambiguity cannot block execution.",
+    "summary_output": "--summary cves|assets|both is intended for JSON output; CSV is intended for raw row output.",
+    "confidence_filtering": "Client-side confidence filtering should follow narrower server-side filters and a max page bound.",
+    "correlation": "Internal/external correlation is consumer-side via JSON exports joined on stable keys such as asset, identifier, IP, CVE, and evidence_key."
+  },
+  "task_to_query": {
+    "fetch_severe_rating_impacting_cves_for_company": {
+      "query": "details.vulnerabilities.severity=severe&impacts_risk_vector_details=AFFECTS_RATING&sort=-last_seen",
+      "cli": "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --severity severe --impacts-risk-vector-details AFFECTS_RATING --default-expand --sort=-last_seen"
+    },
+    "fetch_open_port_cves_for_company": {
+      "query": "risk_vector=open_ports",
+      "cli": "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --open-ports --summary cves --all-pages"
+    },
+    "find_cves_for_particular_asset": {
+      "query": "assets__asset={asset}",
+      "cli": "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --asset {asset} --summary cves --all-pages"
+    },
+    "find_assets_with_particular_cve": {
+      "query": "vulnerabilities={cve}",
+      "cli": "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --cve {cve} --summary assets --all-pages"
+    },
+    "discover_cves_available_for_company": {
+      "endpoint": "/companies/{guid}/findings/filters",
+      "cli": "python3 skills/bitsight-access-company-data/scripts/portal_api.py finding-filters --company-guid {guid}"
+    },
+    "filter_by_confidence": {
+      "query_strategy": "Use server-side filters first, fetch a bounded set of matching pages, then filter details.vulnerabilities[].confidence client-side.",
+      "cli": "python3 skills/bitsight-access-company-data/scripts/portal_api.py vulnerabilities --company-guid {guid} --severity severe --confidence HIGH --summary both --all-pages"
+    }
+  }
+}

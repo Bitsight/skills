@@ -1,0 +1,121 @@
+{
+  "see_also": {
+    "findings_api_knowledge": "assets/findings-api-knowledge.json",
+    "human_index": "references/findings-api-knowledge.md"
+  },
+  "categories": {
+    "compromised_systems": {
+      "description": "Findings indicating systems are compromised, abused, or likely exploited.",
+      "vectors": {
+        "botnet_infections": {
+          "description": "Assets observed participating in botnet activity.",
+          "recommended_parameters": ["severity_category", "infection__family", "infection__id", "assets__asset", "observed_ips_contains", "first_seen_gte", "last_seen_gte"]
+        },
+        "spam_propagation": {
+          "description": "Assets observed sending spam or related unwanted mail.",
+          "recommended_parameters": ["severity_category", "assets__asset", "observed_ips_contains", "first_seen_gte"]
+        },
+        "malware_servers": {
+          "description": "Assets observed hosting or distributing malware.",
+          "recommended_parameters": ["severity_category", "assets__asset", "observed_ips_contains", "last_seen_gte"]
+        },
+        "unsolicited_comm": {
+          "description": "Unsolicited communication findings.",
+          "recommended_parameters": ["severity_category", "assets__asset", "first_seen_gte"]
+        },
+        "potentially_exploited": {
+          "description": "Signals that an asset may have been exploited.",
+          "recommended_parameters": ["severity_category", "assets__asset", "first_seen_gte", "affects_rating"]
+        }
+      }
+    },
+    "diligence": {
+      "description": "Configuration, exposure, encryption, patching, software, and application security findings.",
+      "vectors": {
+        "spf": {
+          "description": "Sender Policy Framework findings.",
+          "recommended_parameters": ["grade", "check_pass", "evidence_key", "affects_rating"]
+        },
+        "dkim": {
+          "description": "DomainKeys Identified Mail findings.",
+          "recommended_parameters": ["grade", "check_pass", "evidence_key", "affects_rating"]
+        },
+        "dmarc": {
+          "description": "DMARC findings.",
+          "recommended_parameters": ["grade", "check_pass", "evidence_key", "affects_rating"]
+        },
+        "ssl_certificates": {
+          "description": "TLS certificate findings.",
+          "recommended_parameters": ["grade", "assets__asset", "first_seen_gte", "last_seen_gte", "assets__combined_importance"]
+        },
+        "ssl_configurations": {
+          "description": "TLS protocol and cipher configuration findings.",
+          "recommended_parameters": ["grade", "check_pass", "assets__asset", "assets__combined_importance"]
+        },
+        "open_ports": {
+          "description": "Exposed open port and service findings.",
+          "recommended_parameters": ["vulnerabilities", "details.vulnerabilities.severity", "cvss__base", "assets__asset", "assets__combined_importance", "assets__is_monitored", "impacts_risk_vector_details"]
+        },
+        "dnssec": {
+          "description": "DNSSEC configuration findings.",
+          "recommended_parameters": ["grade", "evidence_key", "affects_rating"]
+        },
+        "application_security": {
+          "description": "Application security findings.",
+          "recommended_parameters": ["assets__asset", "severity_category", "check_pass", "assets__combined_importance"]
+        },
+        "patching_cadence": {
+          "description": "Patching cadence findings.",
+          "recommended_parameters": ["grade", "duration_gte", "assets__combined_importance", "affects_rating"]
+        },
+        "insecure_systems": {
+          "description": "Insecure system findings.",
+          "recommended_parameters": ["assets__asset", "severity_category", "assets__combined_importance"]
+        },
+        "server_software": {
+          "description": "Server software vulnerabilities or support status findings.",
+          "recommended_parameters": ["vulnerabilities", "details.vulnerabilities.severity", "cvss__base", "assets__asset", "assets__combined_importance"]
+        },
+        "desktop_software": {
+          "description": "Desktop software vulnerabilities or support status findings.",
+          "recommended_parameters": ["vulnerabilities", "details.vulnerabilities.severity", "cvss__base"]
+        },
+        "mobile_software": {
+          "description": "Mobile software vulnerabilities or support status findings.",
+          "recommended_parameters": ["vulnerabilities", "details.vulnerabilities.severity", "cvss__base"]
+        },
+        "mobile_application_security": {
+          "description": "Mobile application security findings.",
+          "recommended_parameters": ["assets__identifier", "assets__asset", "severity_category"]
+        },
+        "web_appsec": {
+          "description": "Web application security findings.",
+          "recommended_parameters": ["assets__asset", "severity_category", "check_pass", "assets__combined_importance"]
+        }
+      }
+    },
+    "user_behavior": {
+      "description": "Findings related to risky user or application behavior.",
+      "vectors": {
+        "file_sharing": {
+          "description": "File sharing activity findings.",
+          "recommended_parameters": ["file_sharing_category", "assets__asset", "severity_category"]
+        },
+        "mobile_app_publications": {
+          "description": "Mobile app publication findings.",
+          "recommended_parameters": ["assets__identifier", "assets__asset"]
+        }
+      }
+    },
+    "security_incidents": {
+      "description": "Security incident and breach-related finding families.",
+      "vectors": {
+        "data_breaches": {
+          "description": "Breach and security incident findings.",
+          "recommended_parameters": ["first_seen_gte", "last_seen_gte", "severity_category", "affects_rating"]
+        }
+      }
+    }
+  },
+  "asset_filter_parameters": ["assets__asset", "assets__identifier", "assets__category", "assets__hosted_by", "assets__combined_importance", "assets__is_monitored", "observed_ips_contains"]
+}
