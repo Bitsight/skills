@@ -1,3 +1,3 @@
 # Public skills
 
-A collection of public GitHub skills.
+This is a collection of public GitHub skills.
